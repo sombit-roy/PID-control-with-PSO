@@ -10,14 +10,14 @@ The CPC system consists of three parts – a controller, a sensor, and an actuat
 
 ## Particle Swarm Optimization
 
-We use a PID controller to control a CPC system. Tuning of the PID controller is very important, as unoptimized gains can result in high overshoot, high settling time or even instability. PSO is a popular non-deterministic method for finding the global optimum of a function. It is modelled after the flight patterns of birds. This method uses a set of particles (swarm) that move around in the search space looking for the best solution. Here, we take the search space as <img src="https://render.githubusercontent.com/render/math?math=\K_p \in [0.015, 0.5], K_i \in [0.0001, 0.15], K_d \in [0.0001, 0.15]">
+We use a PID controller to control a CPC system. Tuning of the PID controller is very important, as unoptimized gains can result in high overshoot, high settling time or even instability. PSO is a popular non-deterministic method for finding the global optimum of a function. It is modelled after the flight patterns of birds. This method uses a set of particles (swarm) that move around in the search space looking for the best solution. Here, we take the search space as $K_p \in [0.015, 0.5], K_i \in [0.0001, 0.15], K_d \in [0.0001, 0.15]$
 
-Each particle adjusts its flight according to its own flying experience as well as the flying experience of other particles. The particle and swarm’s best positions are determined by minimizing the fitness value ofthe objective function. Here, the objective function is the integral time absolute error, <img src="https://render.githubusercontent.com/render/math?math=ITAE = \int_0^\infty t \left|e(t)\right| dt \approx \sum_{n=0}^\infty t_n \left|e[nT_s]\right|T_s">
+Each particle adjusts its flight according to its own flying experience as well as the flying experience of other particles. The particle and swarm’s best positions are determined by minimizing the fitness value ofthe objective function. Here, the objective function is the integral time absolute error, $ITAE = \int_0^\infty t \left|e(t)\right| dt \approx \sum_{n=0}^\infty t_n \left|e[nT_s]\right|T_s$
 
 The velocity and position of the kth particle are updated in each iteration as,
 
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{v}_k(t %2B 1) = w\textbf{v}_k(t) %2B c_1r_1\left(\textbf{P}_{\text{best},k}(t) - \textbf{x}_k(t)\right) %2B c_1r_1\left(\textbf{G}_{\text{best},k}(t) - \textbf{x}_k(t)\right)"><br>
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{x}_k(t %2B 1) = \textbf{x}_k(t) %2B \textbf{v}_k(t %2B 1)">
+$\textbf{v}_k(t + 1) = w\textbf{v}_k(t) + c_1r_1\left(\textbf{P}_{\text{best},k}(t) - \textbf{x}_k(t)\right) + c_1r_1\left(\textbf{G}_{\text{best},k}(t) - \textbf{x}_k(t)\right)$<br>
+$\textbf{x}_k(t + 1) = \textbf{x}_k(t) + \textbf{v}_k(t + 1)$
 
 ![](figures/PSO.png)
 
@@ -29,18 +29,18 @@ The traditional CPC system normally adopts the PID controller whose control para
 
 Firstly, crossover is introduced. We select a random particle and cross it with its historical best position in order to ensure that diversity is maintained in the subsequent iterations. This helps in avoiding the problem of getting trapped in a local minima and accelerates the speed of convergence.
 
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{x}_i(t %2B 1) = \alpha\textbf{x}_i(t) %2B (1-\alpha)\textbf{x}_j(t)"><br>
-<img src="https://render.githubusercontent.com/render/math?math=\textbf{x}_j(t %2B 1) = \alpha\textbf{x}_j(t) %2B (1-\alpha)\textbf{x}_i(t)">
+$\textbf{x}_i(t + 1) = \alpha\textbf{x}_i(t) + (1-\alpha)\textbf{x}_j(t)$<br>
+$\textbf{x}_j(t + 1) = \alpha\textbf{x}_j(t) + (1-\alpha)\textbf{x}_i(t)$
 
 Secondly, a non-linear weight update equation is introduced. Normally, weight decreases linearly because after each iteration the particle is closer to the optimum value, hence, the particles should have more inertia. Here, we see that this function first decreases, then increases, and then decreases again. The increase in the middle ensures that the particle can escape if it has fallen into a local minima. We take C = 2 and p = 2.
 
-<img src="https://render.githubusercontent.com/render/math?math=w(t) = 1 - \left(w_{\text{max}}e^{\frac{-(t-1)}{\text{iter}_\text{max}}}%2B \cfrac{1}{2C}w_{\text{min}}\ln(t) - \left|\cfrac{\text{iter}_\text{max}-t}{p\cdot\text{iter}_\text{max}}\right|\right)">
+$w(t) = 1 - \left(w_{\text{max}}e^{\frac{-(t-1)}{\text{iter}_\text{max}}}+ \cfrac{1}{2C}w_{\text{min}}\ln(t) - \left|\cfrac{\text{iter}_\text{max}-t}{p\cdot\text{iter}_\text{max}}\right|\right)$
 
 ![](figures/weight.png)
 
 We employ a discrete PID controller so that it can be appropriately modelled on a microcontroller or microprocessor based device.
 
-<img src="https://render.githubusercontent.com/render/math?math=u[nT_s] = K_p\left(e[nT_s] %2B \beta K_i\sum_{j=0}^n e[jT_s] %2B K_d(e[nT_s]-e[(n-1)T_s])\right)">
+$u[nT_s] = K_p\left(e[nT_s] + \beta K_i\sum_{j=0}^n e[jT_s] + K_d(e[nT_s]-e[(n-1)T_s])\right)$
 
 Beta factor is 0 if error crosses a certain threshold value, else it is 1. This is done to prevent integral windup, the phenomena where integral action accumulates significantly during rising error, and thus controller output continues to increase even when error is being unwound by offset in another direction. We take the threshold to be 0.1% of maximum error. This configuration for avoiding accumulative error of the overshoot integral is called integral separated PID (IPID).
 
@@ -52,13 +52,13 @@ The model is constructed with appropriate Simulink blocks and all workspace vari
 
 In the digital domain, differentiation and integration is done by taking z-transform. They are, respectively,
 
-<img src="https://render.githubusercontent.com/render/math?math=y[n] = x[n]-x[n-1] \implies Y(z) = (1-z^{-1})X(z)"><br>
-<img src="https://render.githubusercontent.com/render/math?math=y[n] = y[n-1] %2B x[n] \implies Y(z) = \cfrac{z^{-1}}{1-z^{-1}}X(z)">
+$y[n] = x[n]-x[n-1] \implies Y(z) = (1-z^{-1})X(z)$<br>
+$y[n] = y[n-1] + x[n] \implies Y(z) = \cfrac{z^{-1}}{1-z^{-1}}X(z)$
 
 The plant subsystem is a series cascade of the servo valve transfer function and the hydraulic cylinder transfer function, along with a scale factor corresponding to the sensitivity of the displacement detection sensor. Their corresponding transfer functions are given by,
 
-<img src="https://render.githubusercontent.com/render/math?math=G_{sv}(s) = \cfrac{K_{sv}}{\cfrac{s^2}{\omega_{sv}^2} %2B \cfrac{2\zeta_{sv}s}{\omega_{sv}} %2B 1}"><br>
-<img src="https://render.githubusercontent.com/render/math?math=G_{h}(s) = \cfrac{\cfrac{1}{A_p}}{s\left(\cfrac{s^2}{\omega_h^2} %2B \cfrac{2\zeta_h s}{\omega_h} %2B 1\right)}">
+$G_{sv}(s) = \cfrac{K_{sv}}{\cfrac{s^2}{\omega_{sv}^2} + \cfrac{2\zeta_{sv}s}{\omega_{sv}} + 1}$<br>
+$G_{h}(s) = \cfrac{\cfrac{1}{A_p}}{s\left(\cfrac{s^2}{\omega_h^2} + \cfrac{2\zeta_h s}{\omega_h} + 1\right)}$
 
 After substituting the variables with their values as known from the process operation, we get
 
@@ -106,9 +106,9 @@ Note that the integral error is forced to become zero whenever proportional erro
 
 ## Comparison with Ziegler-Nichols method
 
-To get the ZN parameters, we must solve the characteristic equation <img src="https://render.githubusercontent.com/render/math?math=1 %2B G_p K_u = 0">. At the critical point, <img src="https://render.githubusercontent.com/render/math?math=s = j\omega">. The real and imaginary parts are separated and solved to get <img src="https://render.githubusercontent.com/render/math?math=K_u = 0.578, P_u = \cfrac{2\pi}{\omega} = 0.0898">.
+To get the ZN parameters, we must solve the characteristic equation $1 + G_p K_u = 0$. At the critical point, $s = j\omega$. The real and imaginary parts are separated and solved to get $K_u = 0.578, P_u = \cfrac{2\pi}{\omega} = 0.0898$.
 
-<img src="https://render.githubusercontent.com/render/math?math=\therefore K_c = \cfrac{K_u}{1.7} = 0.3453, \tau_I = \cfrac{P_u}{2} = 0.0456, \tau_D = \cfrac{P_u}{8} = 0.0114">
+$\therefore K_c = \cfrac{K_u}{1.7} = 0.3453, \tau_I = \cfrac{P_u}{2} = 0.0456, \tau_D = \cfrac{P_u}{8} = 0.0114$
 
 We see that the marginally stable response oscillates forever and neither settles to a steady state nor blows up to infinty.
 
